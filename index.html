@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="mobile-app">
+    <header class="topbar">
+      <h1 class="app-title">WhatsApp</h1>
+      <div id="topActions" class="top-actions" hidden>
+        <button id="loadFolderBtn" type="button" class="icon-btn" title="Load folder">Folder</button>
+        <button id="loadFileBtn" type="button" class="icon-btn" title="Load file">File</button>
+      </div>
+    </header>
+
+    <section id="chatScreen" class="screen active">
+      <div class="screen-search">
+        <input id="chatListSearch" type="search" placeholder="Search chats" autocomplete="off" />
+        <p id="chatCountLabel">Chats: 0</p>
+      </div>
+      <section id="chatList" class="chat-list" aria-label="Chat list">
+        <div class="empty-state">No chat files loaded.</div>
+      </section>
+    </section>
+
+    <section id="conversationScreen" class="screen">
+      <header class="conversation-header">
+        <button id="backToChatsBtn" type="button" class="icon-btn">Back</button>
+        <div class="conversation-title-wrap">
+          <h2 id="chatTitle"></h2>
+          <p id="chatSubtitle"></p>
+        </div>
+      </header>
+
+      <div class="conversation-tools">
+        <div class="search-row">
+          <input id="messageSearch" type="search" placeholder="Search in chat" autocomplete="off" />
+          <button id="runSearchBtn" type="button" class="icon-btn">Search</button>
+          <div class="search-nav" role="group" aria-label="Search navigation">
+            <button id="searchPrevBtn" type="button" class="icon-btn" title="Previous result">Prev</button>
+            <span id="searchNavLabel" class="search-nav-label">0 / 0</span>
+            <button id="searchNextBtn" type="button" class="icon-btn" title="Next result">Next</button>
+          </div>
+        </div>
+        <div class="date-filter-row">
+          <label class="date-label">Jump to date</label>
+          <input id="dateFilterInput" type="date" class="date-input" />
+          <button id="goToDateBtn" type="button" class="icon-btn">Go</button>
+        </div>
+        <div class="tool-row">
+          <label class="check-row">
+            <input id="starOnlyToggle" type="checkbox" />
+            Starred only
+          </label>
+          <div class="tool-actions">
+            <span id="selectedCountLabel" class="selected-count">Selected: 0</span>
+            <button id="toggleStarredListBtn" type="button" class="icon-btn">Starred List</button>
+            <button id="toggleSelectModeBtn" type="button" class="icon-btn">Select</button>
+            <button id="copySelectedBtn" type="button" class="icon-btn">Copy Selected</button>
+            <button id="clearMessageSearchBtn" type="button" class="icon-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="starredPanel" class="starred-panel" hidden>
+        <div class="starred-panel-header">
+          <strong>Starred Messages</strong>
+          <span id="starredPanelCount">0</span>
+        </div>
+        <div id="starredList" class="starred-list">
+          <p class="empty-state">No starred messages.</p>
+        </div>
+      </section>
+
+      <section id="messageList" class="message-list mobile-bg"></section>
+
+      <footer class="conversation-footer">
+        <p id="messageStats">Messages: 0</p>
+        <p id="starStats">Starred: 0</p>
+      </footer>
+    </section>
+  </div>
+
+  <input id="chatFileInput" type="file" accept=".txt" hidden />
+  <input id="chatFolderInput" type="file" accept=".txt" webkitdirectory multiple hidden />
+
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
