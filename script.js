@@ -11,6 +11,8 @@ const chatListEl = document.getElementById("chatList");
 const chatCountLabel = document.getElementById("chatCountLabel");
 const chatTitle = document.getElementById("chatTitle");
 const chatSubtitle = document.getElementById("chatSubtitle");
+const toggleToolsBtn = document.getElementById("toggleToolsBtn");
+const conversationTools = document.querySelector(".conversation-tools");
 const messageSearch = document.getElementById("messageSearch");
 const runSearchBtn = document.getElementById("runSearchBtn");
 const searchPrevBtn = document.getElementById("searchPrevBtn");
@@ -42,6 +44,7 @@ const state = {
   chatSearchEngine: null,
   activeChatId: null,
   mobileScreen: "chats",
+  toolsVisible: false,
   selectionMode: false,
   starredPanelOpen: false,
   selectedByChat: new Map(),
@@ -81,6 +84,7 @@ messageSearch.addEventListener("keydown", onMessageSearchKeydown);
 runSearchBtn.addEventListener("click", executeSearch);
 searchPrevBtn.addEventListener("click", () => navigateSearch(-1));
 searchNextBtn.addEventListener("click", () => navigateSearch(1));
+toggleToolsBtn?.addEventListener("click", toggleToolsPanel);
 toggleStarredListBtn.addEventListener("click", toggleStarredPanel);
 goToDateBtn.addEventListener("click", goToDate);
 dateFilterInput.addEventListener("keydown", (e) => { if (e.key === "Enter") goToDate(); });
@@ -103,6 +107,7 @@ init();
 
 async function init() {
   setManualModeUI();
+  renderToolsPanel();
   chatSubtitle.textContent = "Use Folder or File to load chats from your device.";
   renderChatList();
   renderMessages();
@@ -143,12 +148,23 @@ function setChats(chatList) {
   resetSearchNavigation();
   renderChatList();
   renderMessages();
-  state.mobileScreen = "chats";
+  state.mobileScreen = state.activeChatId ? "conversation" : "chats";
   syncScreenForViewport();
 }
 
+function toggleToolsPanel() {
+  state.toolsVisible = !state.toolsVisible;
+  renderToolsPanel();
+}
+
+function renderToolsPanel() {
+  if (!conversationTools || !toggleToolsBtn) return;
+  conversationTools.hidden = !state.toolsVisible;
+  toggleToolsBtn.textContent = state.toolsVisible ? "Hide Actions" : "Show Actions";
+}
+
 function buildChatModel(fileName, text) {
-  const messages = parseWhatsAppExport(text);
+  const messages = normalizeMessageOrder(parseWhatsAppExport(text));
   const chatName = inferChatName(fileName, messages);
   const localUser = detectLocalUser(messages);
   const lastMsg = messages[messages.length - 1];
@@ -229,8 +245,11 @@ function renderMessages() {
     updateSearchNavUI();
     renderSelectionUI();
     renderStarredPanel();
+    if (toggleToolsBtn) toggleToolsBtn.disabled = true;
     return;
   }
+
+  if (toggleToolsBtn) toggleToolsBtn.disabled = false;
 
   chatTitle.textContent = chat.chatName;
   chatSubtitle.textContent = `${chat.messages.length} messages - stars auto-saved for this TXT`;
@@ -352,6 +371,37 @@ function parseWhatsAppExport(rawText) {
   }
 
   return parsed;
+}
+
+function normalizeMessageOrder(messages) {
+  if (!Array.isArray(messages) || messages.length < 2) return messages;
+  const firstTs = getMessageTimestamp(messages[0]);
+  const lastTs = getMessageTimestamp(messages[messages.length - 1]);
+  if (firstTs == null || lastTs == null) return messages;
+  // Keep chronological order (oldest -> newest) so latest messages stay at bottom.
+  if (firstTs <= lastTs) return messages;
+  return [...messages].reverse();
+}
+
+function getMessageTimestamp(msg) {
+  if (!msg || !msg.date || !msg.time) return null;
+  const dateMatch = String(msg.date).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (!dateMatch) return null;
+  const month = Number(dateMatch[1]);
+  const day = Number(dateMatch[2]);
+  const yearRaw = Number(dateMatch[3]);
+  const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw;
+
+  const timeMatch = String(msg.time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*([APMapm]{2}))?$/);
+  if (!timeMatch) return null;
+  let hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  const meridiem = timeMatch[3] ? timeMatch[3].toLowerCase() : "";
+
+  if (meridiem === "pm" && hour < 12) hour += 12;
+  if (meridiem === "am" && hour === 12) hour = 0;
+
+  return new Date(year, month - 1, day, hour, minute).getTime();
 }
 
 function detectLocalUser(messages) {
